@@ -38,6 +38,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         registerHotKey()
         installCoreAudioGuard()
         startHIDMonitor()
+        MeetSync.shared.onExternalStateChange = { [weak self] muted in
+            guard let self else { return }
+            isMuted = muted
+            hidMonitor.sendMute(muted)
+            updateMenuBarIcon()
+        }
+        MeetSync.shared.prepareIfNeeded()
 
         // Always start unmuted on launch
         hidMonitor.sendMute(false)
@@ -49,6 +56,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func toggleMute() {
         isMuted.toggle()
         hidMonitor.sendMute(isMuted)
+        MeetSync.shared.sync(muted: isMuted)
         updateMenuBarIcon()
     }
 
@@ -129,6 +137,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         hidMonitor.onStateChanged = { [weak self] muted in
             guard let self else { return }
             isMuted = muted
+            MeetSync.shared.sync(muted: muted)
             updateMenuBarIcon()
         }
         hidMonitor.start()

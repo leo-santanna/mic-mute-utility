@@ -9,14 +9,16 @@
     <key>CFBundleExecutable</key>
     <string>WaveMute</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>2</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
+    <string>1.1.0</string>
     <key>LSUIElement</key>
     <true/>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>WaveMute controls the Insta360 Wave microphone mute state.</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>WaveMute syncs your mute state to Google Meet tabs open in Chrome.</string>
 </dict>
 </plist>
