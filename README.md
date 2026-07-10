@@ -2,6 +2,9 @@
 
 A lightweight macOS menu bar utility that gives the **Insta360 Wave USB microphone** a proper global mute shortcut, with full LED feedback and two-way state sync.
 
+[![Lint](https://github.com/leo-santanna/mic-mute-utility/actions/workflows/ci.yml/badge.svg?branch=main&event=push&job=lint)](https://github.com/leo-santanna/mic-mute-utility/actions/workflows/ci.yml)
+[![Build](https://github.com/leo-santanna/mic-mute-utility/actions/workflows/ci.yml/badge.svg?branch=main&event=push&job=build)](https://github.com/leo-santanna/mic-mute-utility/actions/workflows/ci.yml)
+[![Security](https://github.com/leo-santanna/mic-mute-utility/actions/workflows/ci.yml/badge.svg?branch=main&event=push&job=security)](https://github.com/leo-santanna/mic-mute-utility/actions/workflows/ci.yml)
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
