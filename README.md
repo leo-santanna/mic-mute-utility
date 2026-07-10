@@ -7,6 +7,8 @@ A lightweight macOS menu bar utility that gives the **Insta360 Wave USB micropho
 ![Swift](https://img.shields.io/badge/Swift-5.9-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-leonardoebi-FFDD00?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/leonardoebi)
+
 ---
 
 ## Why this exists
