@@ -38,6 +38,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         registerHotKey()
         installCoreAudioGuard()
         startHIDMonitor()
+        MeetSync.shared.onExternalStateChange = { [weak self] muted in
+            guard let self else { return }
+            isMuted = muted
+            hidMonitor.sendMute(muted)
+            updateMenuBarIcon()
+        }
         MeetSync.shared.prepareIfNeeded()
 
         // Always start unmuted on launch
