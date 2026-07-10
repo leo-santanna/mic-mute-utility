@@ -10,7 +10,7 @@ A lightweight macOS menu bar utility that gives the **Insta360 Wave USB micropho
 
 ## Why this exists
 
-The official Insta360 Wave Controller app provides a menu bar popup to mute the mic, but offers no global keyboard shortcut. This utility fills that gap with a minimal, always-on menu bar app you can assign any hotkey to — including the F9 mute key on Logitech MX keyboards.
+The official Insta360 Wave Controller app provides a menu bar popup to mute the mic, but offers no global keyboard shortcut. This utility fills that gap with a minimal, always-on menu bar app you can assign any hotkey to — including dedicated mute keys found on many modern keyboards.
 
 ---
 
