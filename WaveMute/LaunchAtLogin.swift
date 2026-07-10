@@ -19,7 +19,7 @@ enum LaunchAtLogin {
             "Label": "com.local.WaveMute",
             "ProgramArguments": [executablePath],
             "RunAtLoad": true,
-            "KeepAlive": false,
+            "KeepAlive": false
         ]
         let data = try? PropertyListSerialization.data(
             fromPropertyList: plist, format: .xml, options: 0

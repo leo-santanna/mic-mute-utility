@@ -10,7 +10,7 @@ final class HIDMonitor {
 
     private var thread: Thread?
     private var running = false
-    private var pendingMute: Bool? = nil       // set from main thread, consumed by loop
+    private var pendingMute: Bool?       // set from main thread, consumed by loop
     private let lock = NSLock()
 
     private let libPath: String = {
@@ -22,11 +22,11 @@ final class HIDMonitor {
 
     func start() {
         running = true
-        let t = Thread { [weak self] in self?.loop() }
-        t.name = "HIDMonitor"
-        t.qualityOfService = .utility
-        t.start()
-        thread = t
+        let thread = Thread { [weak self] in self?.loop() }
+        thread.name = "HIDMonitor"
+        thread.qualityOfService = .utility
+        thread.start()
+        self.thread = thread
     }
 
     func stop() {
@@ -58,8 +58,8 @@ final class HIDMonitor {
             let closeSym = dlsym(hidapi, "hid_close")
         else { return }
 
-        let hidOpen  = unsafeBitCast(openSym,  to: OpenFn.self)
-        let hidRead  = unsafeBitCast(readSym,  to: ReadFn.self)
+        let hidOpen  = unsafeBitCast(openSym, to: OpenFn.self)
+        let hidRead  = unsafeBitCast(readSym, to: ReadFn.self)
         let hidWrite = unsafeBitCast(writeSym, to: WriteFn.self)
         let hidClose = unsafeBitCast(closeSym, to: CloseFn.self)
 
@@ -67,7 +67,7 @@ final class HIDMonitor {
         defer { hidClose(dev) }
 
         var buf = [UInt8](repeating: 0, count: 64)
-        var lastMuteState: Bool? = nil
+        var lastMuteState: Bool?
         // After we send a write, suppress heartbeat-driven state changes for this many
         // milliseconds to give the device time to update byte[29] consistently.
         var suppressUntil: Date = .distantPast
@@ -87,8 +87,8 @@ final class HIDMonitor {
             }
 
             // Read next report with a short timeout so we stay responsive
-            let n = hidRead(dev, &buf, 64, 100)
-            guard n > 0 else { continue }
+            let readCount = hidRead(dev, &buf, 64, 100)
+            guard readCount > 0 else { continue }
 
             // Only care about vendor heartbeat: Report ID 3, type 0xEF
             guard buf[0] == 0x03, buf[1] == 0xEF else { continue }
