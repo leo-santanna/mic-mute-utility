@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Build output — the compiled .app bundle
+WaveMute.app/
+
+# Compiled binary inside the source tree (produced during dev runs)
+WaveMute/WaveMute
+
+# Xcode derived data (if ever opened in Xcode)
+DerivedData/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+
+# Swift package cache (if SPM is adopted later)
+.build/
+.swiftpm/
+
+# Editor
+.vscode/
+*.swp
+*.swo
