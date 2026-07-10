@@ -33,7 +33,7 @@ final class HIDMonitor {
         running = false
     }
 
-    // Called from main thread — will be picked up by the loop on next iteration.
+    // Called from main thread; will be picked up by the loop on next iteration.
     func sendMute(_ muted: Bool) {
         lock.lock()
         pendingMute = muted
@@ -69,7 +69,7 @@ final class HIDMonitor {
         var buf = [UInt8](repeating: 0, count: 64)
         var lastMuteState: Bool? = nil
         // After we send a write, suppress heartbeat-driven state changes for this many
-        // milliseconds — gives the device time to update byte[29] consistently.
+        // milliseconds to give the device time to update byte[29] consistently.
         var suppressUntil: Date = .distantPast
 
         while running {

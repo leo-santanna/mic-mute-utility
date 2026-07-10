@@ -52,6 +52,6 @@ codesign --force --sign - "$APP"
 echo "==> Clearing quarantine"
 xattr -cr "$APP"
 
-echo "==> Done — $APP"
+echo "==> Done: $APP"
 echo ""
 echo "Drag $APP into /Applications to install."
