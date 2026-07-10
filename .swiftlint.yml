@@ -1,0 +1,47 @@
+excluded:
+  - make_icon.swift   # standalone build utility, not app source
+
+opt_in_rules:
+  - array_init
+  - closure_spacing
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - empty_count
+  - explicit_init
+  - first_where
+  - identical_operands
+  - last_where
+  - literal_expression_end_indentation
+  - prefer_self_type_over_type_of_self
+  - redundant_nil_coalescing
+  - return_value_from_void_function
+  - sorted_first_last
+  - toggle_bool
+  - unneeded_parentheses_in_closure_argument
+  - yoda_condition
+
+disabled_rules:
+  - trailing_comma        # trailing commas in multi-line collections are acceptable
+
+line_length:
+  warning: 160
+  error: 200
+  ignores_comments: true
+  ignores_urls: true
+
+identifier_name:
+  min_length:
+    warning: 1
+    error: 1
+  excluded:
+    - id
+    - ok
+    - to
+
+type_body_length:
+  warning: 400
+  error: 500
+
+file_length:
+  warning: 500
+  error: 700

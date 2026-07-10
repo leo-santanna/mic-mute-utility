@@ -63,7 +63,7 @@ class ShortcutRecorderWindowController: NSWindowController {
             cancelButton.trailingAnchor.constraint(equalTo: saveButton.leadingAnchor, constant: -8),
 
             saveButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16),
-            saveButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            saveButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16)
         ])
     }
 
@@ -119,7 +119,7 @@ class ShortcutCaptureView: NSView {
         addSubview(label)
         NSLayoutConstraint.activate([
             label.centerXAnchor.constraint(equalTo: centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: centerYAnchor),
+            label.centerYAnchor.constraint(equalTo: centerYAnchor)
         ])
     }
 
@@ -147,7 +147,11 @@ class ShortcutCaptureView: NSView {
         // Reject bare modifier keys (keyCode 54–63 range covers modifiers)
         guard !event.modifierFlags.contains(.function) || keyCode > 63 else {
             // Allow pure function keys (F1–F19) even without modifiers
-            let fnKeys: Set<UInt32> = [122,120,99,118,96,97,98,100,101,109,103,111,105,107,113,106,64,79,80]
+            // Key codes for F1-F12 and other function keys
+            let fnKeys: Set<UInt32> = [
+                122, 120, 99, 118, 96, 97, 98, 100, 101, 109, 103, 111,
+                105, 107, 113, 106, 64, 79, 80
+            ]
             if !fnKeys.contains(keyCode) { return }
             capturedKeyCode = keyCode
             capturedModifiers = 0
@@ -167,8 +171,8 @@ class ShortcutCaptureView: NSView {
     private func carbonModifiers(from flags: NSEvent.ModifierFlags) -> UInt32 {
         var mods: UInt32 = 0
         if flags.contains(.command) { mods |= UInt32(cmdKey) }
-        if flags.contains(.option)  { mods |= UInt32(optionKey) }
-        if flags.contains(.shift)   { mods |= UInt32(shiftKey) }
+        if flags.contains(.option) { mods |= UInt32(optionKey) }
+        if flags.contains(.shift) { mods |= UInt32(shiftKey) }
         if flags.contains(.control) { mods |= UInt32(controlKey) }
         return mods
     }
@@ -181,10 +185,10 @@ class ShortcutCaptureView: NSView {
         if modifiers & UInt32(cmdKey)     != 0 { parts.append("⌘") }
 
         let knownKeys: [UInt32: String] = [
-            122:"F1", 120:"F2", 99:"F3", 118:"F4", 96:"F5", 97:"F6",
-            98:"F7", 100:"F8", 101:"F9", 109:"F10", 103:"F11", 111:"F12",
-            36:"↩", 48:"⇥", 49:"Space", 51:"⌫", 53:"Esc",
-            123:"←", 124:"→", 125:"↓", 126:"↑",
+            122: "F1", 120: "F2", 99: "F3", 118: "F4", 96: "F5", 97: "F6",
+            98: "F7", 100: "F8", 101: "F9", 109: "F10", 103: "F11", 111: "F12",
+            36: "↩", 48: "⇥", 49: "Space", 51: "⌫", 53: "Esc",
+            123: "←", 124: "→", 125: "↓", 126: "↑"
         ]
         if let name = knownKeys[keyCode] {
             parts.append(name)
@@ -200,11 +204,18 @@ class ShortcutCaptureView: NSView {
         let source = TISCopyCurrentKeyboardInputSource().takeRetainedValue()
         guard let layoutData = TISGetInputSourceProperty(source, kTISPropertyUnicodeKeyLayoutData) else { return nil }
         let layout = unsafeBitCast(layoutData, to: CFData.self)
-        let keyLayoutPtr = unsafeBitCast(CFDataGetBytePtr(layout), to: UnsafePointer<CoreServices.UCKeyboardLayout>.self)
+        let keyLayoutPtr = unsafeBitCast(
+            CFDataGetBytePtr(layout),
+            to: UnsafePointer<CoreServices.UCKeyboardLayout>.self
+        )
         var deadKeyState: UInt32 = 0
         var chars = [UniChar](repeating: 0, count: 4)
         var length = 0
-        UCKeyTranslate(keyLayoutPtr, UInt16(keyCode), UInt16(kUCKeyActionDisplay), 0, UInt32(LMGetKbdType()), OptionBits(kUCKeyTranslateNoDeadKeysBit), &deadKeyState, 4, &length, &chars)
+        UCKeyTranslate(
+            keyLayoutPtr, UInt16(keyCode), UInt16(kUCKeyActionDisplay),
+            0, UInt32(LMGetKbdType()), OptionBits(kUCKeyTranslateNoDeadKeysBit),
+            &deadKeyState, 4, &length, &chars
+        )
         return length > 0 ? String(utf16CodeUnits: Array(chars.prefix(length)), count: length) : nil
     }
 }

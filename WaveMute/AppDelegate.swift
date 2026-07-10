@@ -94,18 +94,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Shortcut persistence
 
     private func loadShortcut() {
-        let d = UserDefaults.standard
-        guard d.object(forKey: "shortcutKeyCode") != nil else { return }
-        shortcutKeyCode = UInt32(d.integer(forKey: "shortcutKeyCode"))
-        shortcutModifiers = UInt32(d.integer(forKey: "shortcutModifiers"))
-        shortcutDisplay = d.string(forKey: "shortcutDisplay") ?? "F9"
+        let defaults = UserDefaults.standard
+        guard defaults.object(forKey: "shortcutKeyCode") != nil else { return }
+        shortcutKeyCode = UInt32(defaults.integer(forKey: "shortcutKeyCode"))
+        shortcutModifiers = UInt32(defaults.integer(forKey: "shortcutModifiers"))
+        shortcutDisplay = defaults.string(forKey: "shortcutDisplay") ?? "F9"
     }
 
     func applyNewShortcut(keyCode: UInt32, modifiers: UInt32, display: String) {
-        let d = UserDefaults.standard
-        d.set(Int(keyCode),   forKey: "shortcutKeyCode")
-        d.set(Int(modifiers), forKey: "shortcutModifiers")
-        d.set(display,        forKey: "shortcutDisplay")
+        let defaults = UserDefaults.standard
+        defaults.set(Int(keyCode), forKey: "shortcutKeyCode")
+        defaults.set(Int(modifiers), forKey: "shortcutModifiers")
+        defaults.set(display, forKey: "shortcutDisplay")
         shortcutKeyCode = keyCode
         shortcutModifiers = modifiers
         shortcutDisplay = display
@@ -189,11 +189,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             mElement: kAudioObjectPropertyElementMain
         )
         var val: UInt32 = 0
-        var sz: UInt32 = 4
-        AudioObjectGetPropertyData(deviceID, &muteProp, 0, nil, &sz, &val)
+        var size: UInt32 = 4
+        AudioObjectGetPropertyData(deviceID, &muteProp, 0, nil, &size, &val)
         guard val != 0 else { return }  // already unmuted, nothing to do
         var zero: UInt32 = 0
-        AudioObjectSetPropertyData(deviceID, &muteProp, 0, nil, sz, &zero)
+        AudioObjectSetPropertyData(deviceID, &muteProp, 0, nil, size, &zero)
     }
 
     // MARK: - Change shortcut
