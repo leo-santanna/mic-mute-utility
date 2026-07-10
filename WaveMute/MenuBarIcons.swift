@@ -8,6 +8,8 @@ func makeMicIcon(muted: Bool) -> NSImage {
     }
     let base = NSImage(systemSymbolName: name, accessibilityDescription: nil) ?? NSImage()
     let sized = base.withSymbolConfiguration(config) ?? base
-    if !muted { sized.isTemplate = true }
+    if !muted {
+        sized.isTemplate = true
+    }
     return sized
 }

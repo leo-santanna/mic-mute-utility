@@ -1,16 +1,16 @@
 import Foundation
 
-// Keeps the Wave USB HID device open permanently on a background thread.
-// - Sends Report 6 to mute/unmute and LED.
-// - Reads incoming vendor heartbeat (Report ID 3, type 0xEF) and watches byte[29]
-//   which reflects the device's actual mute state. When it changes (physical button),
-//   onStateChanged is called with the new mute value.
+/// Keeps the Wave USB HID device open permanently on a background thread.
+/// - Sends Report 6 to mute/unmute and LED.
+/// - Reads incoming vendor heartbeat (Report ID 3, type 0xEF) and watches byte[29]
+///   which reflects the device's actual mute state. When it changes (physical button),
+///   onStateChanged is called with the new mute value.
 final class HIDMonitor {
     var onStateChanged: ((_ muted: Bool) -> Void)?
 
     private var thread: Thread?
     private var running = false
-    private var pendingMute: Bool?       // set from main thread, consumed by loop
+    private var pendingMute: Bool? // set from main thread, consumed by loop
     private let lock = NSLock()
 
     private let libPath: String = {
@@ -33,7 +33,7 @@ final class HIDMonitor {
         running = false
     }
 
-    // Called from main thread; will be picked up by the loop on next iteration.
+    /// Called from main thread; will be picked up by the loop on next iteration.
     func sendMute(_ muted: Bool) {
         lock.lock()
         pendingMute = muted
@@ -46,20 +46,20 @@ final class HIDMonitor {
         guard let hidapi = dlopen(libPath, RTLD_NOW) else { return }
         defer { dlclose(hidapi) }
 
-        typealias OpenFn  = @convention(c) (UInt16, UInt16, UnsafePointer<Int32>?) -> UnsafeMutableRawPointer?
-        typealias ReadFn  = @convention(c) (UnsafeMutableRawPointer?, UnsafeMutablePointer<UInt8>, Int, Int32) -> Int32
+        typealias OpenFn = @convention(c) (UInt16, UInt16, UnsafePointer<Int32>?) -> UnsafeMutableRawPointer?
+        typealias ReadFn = @convention(c) (UnsafeMutableRawPointer?, UnsafeMutablePointer<UInt8>, Int, Int32) -> Int32
         typealias WriteFn = @convention(c) (UnsafeMutableRawPointer?, UnsafePointer<UInt8>, Int) -> Int32
         typealias CloseFn = @convention(c) (UnsafeMutableRawPointer?) -> Void
 
         guard
-            let openSym  = dlsym(hidapi, "hid_open"),
-            let readSym  = dlsym(hidapi, "hid_read_timeout"),
+            let openSym = dlsym(hidapi, "hid_open"),
+            let readSym = dlsym(hidapi, "hid_read_timeout"),
             let writeSym = dlsym(hidapi, "hid_write"),
             let closeSym = dlsym(hidapi, "hid_close")
         else { return }
 
-        let hidOpen  = unsafeBitCast(openSym, to: OpenFn.self)
-        let hidRead  = unsafeBitCast(readSym, to: ReadFn.self)
+        let hidOpen = unsafeBitCast(openSym, to: OpenFn.self)
+        let hidRead = unsafeBitCast(readSym, to: ReadFn.self)
         let hidWrite = unsafeBitCast(writeSym, to: WriteFn.self)
         let hidClose = unsafeBitCast(closeSym, to: CloseFn.self)
 

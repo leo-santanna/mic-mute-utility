@@ -1,5 +1,5 @@
-import Cocoa
 import Carbon
+import Cocoa
 import CoreAudio
 
 class AppDelegate: NSObject, NSApplicationDelegate {
@@ -9,12 +9,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var shortcutMenuItem: NSMenuItem!
     private var recorderWindowController: ShortcutRecorderWindowController?
 
-    private var shortcutKeyCode: UInt32 = 101  // F9 default
+    private var shortcutKeyCode: UInt32 = 101 // F9 default
     private var shortcutModifiers: UInt32 = 0
     private var shortcutDisplay: String = "F9"
     private let hidMonitor = HIDMonitor()
 
-    func applicationDidFinishLaunching(_ notification: Notification) {
+    func applicationDidFinishLaunching(_: Notification) {
         loadShortcut()
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -61,7 +61,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         button.imagePosition = .imageOnly
     }
 
-    private func shortcutMenuTitle() -> String { "Shortcut: \(shortcutDisplay)" }
+    private func shortcutMenuTitle() -> String {
+        "Shortcut: \(shortcutDisplay)"
+    }
 
     // MARK: - Hotkey
 
@@ -126,18 +128,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func startHIDMonitor() {
         hidMonitor.onStateChanged = { [weak self] muted in
             guard let self else { return }
-            self.isMuted = muted
-            self.updateMenuBarIcon()
+            isMuted = muted
+            updateMenuBarIcon()
         }
         hidMonitor.start()
     }
 
     // MARK: - CoreAudio bounce-back guard
 
-    // When Report 6 mutes the device at hardware level, the device bounces a
-    // USB Audio Class mute event back to macOS CoreAudio. Meet detects that as
-    // "system muted". We subscribe to that property and immediately reset it to
-    // unmuted so macOS never sees a persistent mute state.
+    /// When Report 6 mutes the device at hardware level, the device bounces a
+    /// USB Audio Class mute event back to macOS CoreAudio. Meet detects that as
+    /// "system muted". We subscribe to that property and immediately reset it to
+    /// unmuted so macOS never sees a persistent mute state.
     private func installCoreAudioGuard() {
         guard let deviceID = findWaveInputDeviceID() else { return }
         var muteProp = AudioObjectPropertyAddress(
@@ -177,7 +179,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 mScope: kAudioDevicePropertyScopeInput,
                 mElement: kAudioObjectPropertyElementMain
             )
-            if AudioObjectHasProperty(id, &muteProp) { return id }
+            if AudioObjectHasProperty(id, &muteProp) {
+                return id
+            }
         }
         return nil
     }
@@ -191,7 +195,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         var val: UInt32 = 0
         var size: UInt32 = 4
         AudioObjectGetPropertyData(deviceID, &muteProp, 0, nil, &size, &val)
-        guard val != 0 else { return }  // already unmuted, nothing to do
+        guard val != 0 else { return } // already unmuted, nothing to do
         var zero: UInt32 = 0
         AudioObjectSetPropertyData(deviceID, &muteProp, 0, nil, size, &zero)
     }
@@ -217,7 +221,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 private extension String {
     var fourCharCode: FourCharCode {
         var result: FourCharCode = 0
-        for char in utf8.prefix(4) { result = result << 8 + FourCharCode(char) }
+        for char in utf8.prefix(4) {
+            result = result << 8 + FourCharCode(char)
+        }
         return result
     }
 }

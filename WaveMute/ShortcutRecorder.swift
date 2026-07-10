@@ -1,5 +1,5 @@
-import Cocoa
 import Carbon
+import Cocoa
 
 class ShortcutRecorderWindowController: NSWindowController {
     var onShortcutSelected: ((UInt32, UInt32, String) -> Void)?
@@ -63,7 +63,7 @@ class ShortcutRecorderWindowController: NSWindowController {
             cancelButton.trailingAnchor.constraint(equalTo: saveButton.leadingAnchor, constant: -8),
 
             saveButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16),
-            saveButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16)
+            saveButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
         ])
     }
 
@@ -84,7 +84,7 @@ class ShortcutRecorderWindowController: NSWindowController {
         onCancelled?()
     }
 
-    func windowShouldClose(_ sender: NSWindow) -> Bool {
+    func windowShouldClose(_: NSWindow) -> Bool {
         onCancelled?()
         return true
     }
@@ -104,7 +104,10 @@ class ShortcutCaptureView: NSView {
         super.init(frame: frame)
         setup()
     }
-    required init?(coder: NSCoder) { super.init(coder: coder); setup() }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder); setup()
+    }
 
     private func setup() {
         wantsLayer = true
@@ -119,13 +122,15 @@ class ShortcutCaptureView: NSView {
         addSubview(label)
         NSLayoutConstraint.activate([
             label.centerXAnchor.constraint(equalTo: centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: centerYAnchor)
+            label.centerYAnchor.constraint(equalTo: centerYAnchor),
         ])
     }
 
-    override var acceptsFirstResponder: Bool { true }
+    override var acceptsFirstResponder: Bool {
+        true
+    }
 
-    override func mouseDown(with event: NSEvent) {
+    override func mouseDown(with _: NSEvent) {
         window?.makeFirstResponder(self)
         layer?.borderColor = NSColor.controlAccentColor.cgColor
     }
@@ -150,9 +155,11 @@ class ShortcutCaptureView: NSView {
             // Key codes for F1-F12 and other function keys
             let fnKeys: Set<UInt32> = [
                 122, 120, 99, 118, 96, 97, 98, 100, 101, 109, 103, 111,
-                105, 107, 113, 106, 64, 79, 80
+                105, 107, 113, 106, 64, 79, 80,
             ]
-            if !fnKeys.contains(keyCode) { return }
+            if !fnKeys.contains(keyCode) {
+                return
+            }
             capturedKeyCode = keyCode
             capturedModifiers = 0
             capturedDisplay = keyName(for: keyCode, modifiers: 0)
@@ -170,25 +177,41 @@ class ShortcutCaptureView: NSView {
 
     private func carbonModifiers(from flags: NSEvent.ModifierFlags) -> UInt32 {
         var mods: UInt32 = 0
-        if flags.contains(.command) { mods |= UInt32(cmdKey) }
-        if flags.contains(.option) { mods |= UInt32(optionKey) }
-        if flags.contains(.shift) { mods |= UInt32(shiftKey) }
-        if flags.contains(.control) { mods |= UInt32(controlKey) }
+        if flags.contains(.command) {
+            mods |= UInt32(cmdKey)
+        }
+        if flags.contains(.option) {
+            mods |= UInt32(optionKey)
+        }
+        if flags.contains(.shift) {
+            mods |= UInt32(shiftKey)
+        }
+        if flags.contains(.control) {
+            mods |= UInt32(controlKey)
+        }
         return mods
     }
 
     private func keyName(for keyCode: UInt32, modifiers: UInt32) -> String {
         var parts: [String] = []
-        if modifiers & UInt32(controlKey) != 0 { parts.append("⌃") }
-        if modifiers & UInt32(optionKey)  != 0 { parts.append("⌥") }
-        if modifiers & UInt32(shiftKey)   != 0 { parts.append("⇧") }
-        if modifiers & UInt32(cmdKey)     != 0 { parts.append("⌘") }
+        if modifiers & UInt32(controlKey) != 0 {
+            parts.append("⌃")
+        }
+        if modifiers & UInt32(optionKey) != 0 {
+            parts.append("⌥")
+        }
+        if modifiers & UInt32(shiftKey) != 0 {
+            parts.append("⇧")
+        }
+        if modifiers & UInt32(cmdKey) != 0 {
+            parts.append("⌘")
+        }
 
         let knownKeys: [UInt32: String] = [
             122: "F1", 120: "F2", 99: "F3", 118: "F4", 96: "F5", 97: "F6",
             98: "F7", 100: "F8", 101: "F9", 109: "F10", 103: "F11", 111: "F12",
             36: "↩", 48: "⇥", 49: "Space", 51: "⌫", 53: "Esc",
-            123: "←", 124: "→", 125: "↓", 126: "↑"
+            123: "←", 124: "→", 125: "↓", 126: "↑",
         ]
         if let name = knownKeys[keyCode] {
             parts.append(name)
