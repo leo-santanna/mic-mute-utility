@@ -131,6 +131,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         hidMonitor.onStateChanged = { [weak self] muted in
             guard let self else { return }
             isMuted = muted
+            MeetSync.shared.sync(muted: muted)
             updateMenuBarIcon()
         }
         hidMonitor.start()
