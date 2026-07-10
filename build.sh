@@ -72,7 +72,7 @@ cp WaveMute/AppIcon.icns "$RESOURCES/AppIcon.icns"
 
 echo "==> Signing (ad-hoc)"
 codesign --force --sign - "$APP/Contents/Frameworks/libhidapi.dylib"
-codesign --force --sign - "$APP/Contents/MacOS/WaveMute"
+codesign --force --sign - --entitlements WaveMute/WaveMute.entitlements "$APP/Contents/MacOS/WaveMute"
 codesign --force --sign - "$APP"
 
 echo "==> Clearing quarantine"
