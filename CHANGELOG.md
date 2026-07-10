@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0] - 2026-07-10
+
+### Added
+- Google Meet sync: muting via hotkey, physical button, or menu bar now also mutes the mic in any active Google Meet call (Chrome tab or PWA)
+- Reverse Meet sync: clicking the mute button inside Google Meet syncs back to WaveMute and the Wave mic LED within 500ms
+- Beta build indicator: builds not at a release tag show a β badge on the menu bar icon to distinguish from stable releases
+- NSAppleEventsUsageDescription and entitlement for Chrome AppleScript access
+
 All notable changes to WaveMute are documented here.
 
 Releases are created by pushing a version tag to `main`. GitHub Actions builds the app, generates release notes from commit messages since the previous tag, and attaches a signed zip to the release automatically.
