@@ -12,6 +12,29 @@ HIDAPI_DST="$FRAMEWORKS/libhidapi.dylib"
 
 cd "$(dirname "$0")"
 
+# Detect beta: a build is beta when it is not on a version tag.
+# In CI, GITHUB_REF is set; locally we check whether HEAD has a vX.Y.Z tag.
+IS_BETA=false
+if [ -n "${GITHUB_REF:-}" ]; then
+  # CI: beta unless the ref is a version tag
+  if [[ "${GITHUB_REF}" != refs/tags/v* ]]; then
+    IS_BETA=true
+  fi
+else
+  # Local: beta unless HEAD is exactly at a version tag
+  if ! git describe --exact-match --match "v*.*.*" HEAD >/dev/null 2>&1; then
+    IS_BETA=true
+  fi
+fi
+
+if [ "$IS_BETA" = true ]; then
+  echo "==> Build type: BETA"
+  BETA_FLAG="-D BETA_BUILD"
+else
+  echo "==> Build type: release"
+  BETA_FLAG=""
+fi
+
 echo "==> Cleaning old build"
 rm -rf "$APP"
 
@@ -19,6 +42,7 @@ echo "==> Creating bundle structure"
 mkdir -p "$MACOS" "$FRAMEWORKS" "$RESOURCES"
 
 echo "==> Compiling"
+# shellcheck disable=SC2086
 swiftc \
   WaveMute/main.swift \
   WaveMute/AppDelegate.swift \
@@ -26,6 +50,8 @@ swiftc \
   WaveMute/MenuBarIcons.swift \
   WaveMute/LaunchAtLogin.swift \
   WaveMute/HIDMonitor.swift \
+  WaveMute/MeetSync.swift \
+  $BETA_FLAG \
   -o "$BINARY" \
   -framework Cocoa \
   -framework CoreAudio \
@@ -54,4 +80,8 @@ xattr -cr "$APP"
 
 echo "==> Done: $APP"
 echo ""
-echo "Drag $APP into /Applications to install."
+if [ "$IS_BETA" = true ]; then
+  echo "Beta build - menu bar icon will show a β badge."
+else
+  echo "Drag $APP into /Applications to install."
+fi
