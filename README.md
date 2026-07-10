@@ -1,6 +1,6 @@
 # WaveMute
 
-A lightweight macOS menu bar utility that gives the **Insta360 Wave USB microphone** a proper global mute shortcut — with full LED feedback and two-way state sync.
+A lightweight macOS menu bar utility that gives the **Insta360 Wave USB microphone** a proper global mute shortcut, with full LED feedback and two-way state sync.
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9-orange)
@@ -10,18 +10,18 @@ A lightweight macOS menu bar utility that gives the **Insta360 Wave USB micropho
 
 ## Why this exists
 
-The official Insta360 Wave Controller app provides a menu bar popup to mute the mic, but offers no global keyboard shortcut. This utility fills that gap with a minimal, always-on menu bar app you can assign any hotkey to — including dedicated mute keys found on many modern keyboards.
+The official Insta360 Wave Controller app provides a menu bar popup to mute the mic, but offers no global keyboard shortcut. This utility fills that gap with a minimal, always-on menu bar app you can assign any hotkey to, including dedicated mute keys found on many modern keyboards.
 
 ---
 
 ## Features
 
-- **Global hotkey** — configurable, defaults to F9
-- **Hardware-level mute** — mutes the mic at the device firmware level via HID Output Report 6, not through CoreAudio, so meeting apps (Google Meet, Teams, Zoom) don't show a "microphone muted by system" warning
-- **LED sync** — the mic's front LED turns red when muted, exactly like the official app
-- **Physical button sync** — muting/unmuting from the mic's built-in touch display is reflected immediately in the menu bar icon
-- **Launch at login** — optional, toggled from the menu
-- **No dependencies at runtime** — `libhidapi` is bundled inside the app
+- **Global hotkey**: configurable, defaults to F9
+- **Hardware-level mute**: mutes the mic at the device firmware level via HID Output Report 6, not through CoreAudio, so meeting apps (Google Meet, Teams, Zoom) don't show a "microphone muted by system" warning
+- **LED sync**: the mic's front LED turns red when muted, exactly like the official app
+- **Physical button sync**: muting/unmuting from the mic's built-in touch display is reflected immediately in the menu bar icon
+- **Launch at login**: optional, toggled from the menu
+- **No runtime dependencies**: `libhidapi` is bundled inside the app
 
 ---
 
@@ -34,7 +34,7 @@ The official Insta360 Wave Controller app provides a menu bar popup to mute the 
 
 ## Installation
 
-### Option A — build from source (recommended)
+### Option A: build from source (recommended)
 
 ```bash
 # 1. Install hidapi (build-time only, bundled into the app afterwards)
@@ -51,9 +51,9 @@ xattr -cr /Applications/WaveMute.app   # clear Gatekeeper quarantine
 open /Applications/WaveMute.app
 ```
 
-### Option B — download a release
+### Option B: download a release
 
-Download the latest `WaveMute.app.zip` from the [Releases](https://github.com/leo-santanna/mic-mute-utility/releases) page, unzip, and drag to `/Applications`. On first launch you may need to right-click → Open to bypass Gatekeeper (the app is ad-hoc signed, not notarized).
+Download the latest `WaveMute.app.zip` from the [Releases](https://github.com/leo-santanna/mic-mute-utility/releases) page, unzip, and drag to `/Applications`. On first launch you may need to right-click > Open to bypass Gatekeeper (the app is ad-hoc signed, not notarized).
 
 ---
 
@@ -68,9 +68,9 @@ Once running, a microphone icon appears in the menu bar:
 
 **Toggle mute:** press the configured hotkey (default **F9**), click the mic's physical button, or use *Toggle Wave Mute* in the menu.
 
-**Change the hotkey:** click the menu bar icon → *Change Shortcut…* → press the key combination you want → *Save*.
+**Change the hotkey:** click the menu bar icon, then *Change Shortcut...*, press the key combination you want, and click *Save*.
 
-**Launch at login:** click the menu bar icon → toggle *Launch at Login*.
+**Launch at login:** click the menu bar icon and toggle *Launch at Login*.
 
 ---
 
@@ -82,9 +82,9 @@ The Insta360 Wave Controller app communicates with the mic over a proprietary Ma
 
 Through reverse engineering the HID descriptor and firmware behaviour, we found a simpler path:
 
-- **HID Output Report 6** (`[0x06, 0x01]` = mute, `[0x06, 0x00]` = unmute) controls both the **audio gate** and the **LED** directly at the firmware level — no authentication required.
+- **HID Output Report 6** (`[0x06, 0x01]` = mute, `[0x06, 0x00]` = unmute) controls both the audio gate and the LED directly at the firmware level, with no authentication required.
 - The device reflects its mute state in **byte[29]** of the periodic vendor heartbeat it broadcasts (Report ID 3, type `0xEF`). WaveMute reads this to stay in sync with physical button presses.
-- Because Report 6 causes the device to briefly mirror its state through the USB Audio Class mute control (which macOS CoreAudio exposes), meeting apps could detect a "system mute" event. WaveMute subscribes to that CoreAudio property and immediately resets it to `0`, so the OS never reports the mic as system-muted.
+- Report 6 causes the device to briefly mirror its state through the USB Audio Class mute control (which macOS CoreAudio exposes), so meeting apps could detect a "system mute" event. WaveMute subscribes to that CoreAudio property and immediately resets it to `0`, so the OS never reports the mic as system-muted.
 
 ### Device identifiers
 
@@ -130,8 +130,7 @@ This compiles all Swift sources, bundles `libhidapi.dylib` from Homebrew into `W
 To regenerate the app icon (e.g. after design changes):
 
 ```bash
-swift make_icon.swift <size> <output.png>   # single size
-# or re-run the full iconset generation inside build.sh
+swift make_icon.swift <size> <output.png>
 ```
 
 ---
@@ -140,9 +139,9 @@ swift make_icon.swift <size> <output.png>   # single size
 
 The investigation that led to this utility involved:
 
-1. Identifying the device via `ioreg` — VID `0x18F0`, PID `0x4E40`
+1. Identifying the device via `ioreg`: VID `0x18F0`, PID `0x4E40`
 2. Decoding the HID report descriptor to map all input/output report IDs and their usages
-3. Disassembling the Qt binary (`PSP::HidMavlinkController`, `PSP::PcMavlink`) to understand the vendor Mavlink protocol and mute command IDs (`SetMicMute` → msg `0x2B`)
+3. Disassembling the Qt binary (`PSP::HidMavlinkController`, `PSP::PcMavlink`) to understand the vendor Mavlink protocol and mute command IDs (`SetMicMute` -> msg `0x2B`)
 4. Empirically testing each HID output report to identify which one controls the LED and audio gate
 5. Capturing the periodic heartbeat to find the byte that reflects device mute state
 6. Discovering the CoreAudio bounce-back and implementing the property listener guard
@@ -153,10 +152,10 @@ The investigation that led to this utility involved:
 
 Contributions are welcome. Some areas that could be improved:
 
-- **Notarized release** — sign with an Apple Developer certificate so users don't need to clear quarantine manually
-- **Xcode project / SPM** — replace the `build.sh` script with a proper package structure
-- **Other Insta360 devices** — the HID approach may work for other mics in the lineup with minor adjustments to report IDs or heartbeat byte offsets
-- **Menu bar extra refinements** — e.g. show mic level, handle device disconnect/reconnect gracefully
+- **Notarized release**: sign with an Apple Developer certificate so users don't need to clear quarantine manually
+- **Xcode project / SPM**: replace the `build.sh` script with a proper package structure
+- **Other Insta360 devices**: the HID approach may work for other mics in the lineup with minor adjustments to report IDs or heartbeat byte offsets
+- **Menu bar refinements**: show mic level, handle device disconnect/reconnect gracefully
 
 Please open an issue before starting significant work so we can coordinate.
 
@@ -164,11 +163,11 @@ Please open an issue before starting significant work so we can coordinate.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT - see [LICENSE](LICENSE).
 
 ---
 
 ## Acknowledgements
 
-- [hidapi](https://github.com/libusb/hidapi) — the HID library bundled at runtime
+- [hidapi](https://github.com/libusb/hidapi) - the HID library bundled at runtime
 - Insta360 for building a microphone with accessible HID endpoints
