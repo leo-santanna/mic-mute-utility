@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and release
+    runs-on: macos-15
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Install hidapi
+        run: brew install hidapi
+
+      - name: Build app
+        run: bash build.sh
+
+      - name: Verify bundle
+        run: |
+          test -f WaveMute.app/Contents/MacOS/WaveMute
+          test -f WaveMute.app/Contents/Frameworks/libhidapi.dylib
+          test -f WaveMute.app/Contents/Resources/AppIcon.icns
+
+      - name: Package zip
+        run: |
+          ditto -c -k --keepParent WaveMute.app WaveMute-${{ steps.version.outputs.version }}.zip
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: WaveMute ${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          files: WaveMute-${{ steps.version.outputs.version }}.zip
+          fail_on_unmatched_files: true
