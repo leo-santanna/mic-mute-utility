@@ -38,6 +38,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         registerHotKey()
         installCoreAudioGuard()
         startHIDMonitor()
+        MeetSync.shared.prepareIfNeeded()
 
         // Always start unmuted on launch
         hidMonitor.sendMute(false)

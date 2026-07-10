@@ -22,8 +22,17 @@ final class MeetSync {
     static let shared = MeetSync()
 
     private let meetPWABundleID = "com.google.Chrome.app.kjgfgldnnfoeklkmfkjfagphfepbbdan"
+    private var hasPromptedForAccessibility = false
 
     private init() {}
+
+    /// Call once at app launch. If the Meet PWA is already running and we don't
+    /// have Accessibility permission yet, prompt now rather than mid-mute-press.
+    func prepareIfNeeded() {
+        guard isPWARunning(), !AXIsProcessTrusted() else { return }
+        hasPromptedForAccessibility = true
+        requestAccessibility()
+    }
 
     func sync(muted: Bool) {
         DispatchQueue.global(qos: .userInitiated).async {
@@ -36,8 +45,12 @@ final class MeetSync {
 
     private func syncChromeTab(muted: Bool) {
         guard let script = buildChromeScript(muted: muted) else { return }
-        var error: NSDictionary?
-        NSAppleScript(source: script)?.executeAndReturnError(&error)
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        task.arguments = ["-e", script]
+        task.standardOutput = FileHandle.nullDevice
+        task.standardError = FileHandle.nullDevice
+        try? task.run()
     }
 
     private func buildChromeScript(muted: Bool) -> String? {
@@ -72,7 +85,12 @@ final class MeetSync {
     private func syncPWA() {
         guard isPWARunning() else { return }
         guard AXIsProcessTrusted() else {
-            requestAccessibilityIfNeeded()
+            // Only show the system permission prompt once per app launch.
+            // Subsequent F9 presses while permission is missing are silent no-ops.
+            if !hasPromptedForAccessibility {
+                hasPromptedForAccessibility = true
+                requestAccessibility()
+            }
             return
         }
         let previousApp = NSWorkspace.shared.frontmostApplication
@@ -80,7 +98,6 @@ final class MeetSync {
             withBundleIdentifier: meetPWABundleID
         ).first {
             meetApp.activate()
-            // Small delay to let Meet become frontmost before sending the event
             Thread.sleep(forTimeInterval: 0.15)
             postCmdD()
             Thread.sleep(forTimeInterval: 0.05)
@@ -102,7 +119,7 @@ final class MeetSync {
         keyUp?.post(tap: .cghidEventTap)
     }
 
-    private func requestAccessibilityIfNeeded() {
+    private func requestAccessibility() {
         DispatchQueue.main.async {
             let opts = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
             AXIsProcessTrustedWithOptions(opts as CFDictionary)
