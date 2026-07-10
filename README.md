@@ -151,7 +151,9 @@ The investigation that led to this utility involved:
 
 ## Contributing
 
-Contributions are welcome. Some areas that could be improved:
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow, branch conventions, and commit message format.
+
+Some areas that could be improved:
 
 - **Notarized release**: sign with an Apple Developer certificate so users don't need to clear quarantine manually
 - **Xcode project / SPM**: replace the `build.sh` script with a proper package structure
