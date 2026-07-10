@@ -49,6 +49,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func toggleMute() {
         isMuted.toggle()
         hidMonitor.sendMute(isMuted)
+        MeetSync.shared.sync(muted: isMuted)
         updateMenuBarIcon()
     }
 
