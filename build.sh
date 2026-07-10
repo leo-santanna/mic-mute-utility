@@ -22,7 +22,7 @@ if [ -n "${GITHUB_REF:-}" ]; then
   fi
 else
   # Local: beta unless HEAD is exactly at a version tag
-  if ! git describe --exact-match --match "v*.*.*" HEAD >/dev/null 2>&1; then
+  if ! git describe --exact-match --tags --match "v*.*.*" HEAD >/dev/null 2>&1; then
     IS_BETA=true
   fi
 fi
