@@ -5,6 +5,7 @@ import Foundation
 /// - Reads incoming vendor heartbeat (Report ID 3, type 0xEF) and watches byte[29]
 ///   which reflects the device's actual mute state. When it changes (physical button),
 ///   onStateChanged is called with the new mute value.
+/// - Automatically reconnects after USB re-enumeration (e.g. logout/login cycle).
 final class HIDMonitor {
     var onStateChanged: ((_ muted: Bool) -> Void)?
 
@@ -63,17 +64,42 @@ final class HIDMonitor {
         let hidWrite = unsafeBitCast(writeSym, to: WriteFn.self)
         let hidClose = unsafeBitCast(closeSym, to: CloseFn.self)
 
-        guard let dev = hidOpen(0x18F0, 0x4E40, nil) else { return }
-        defer { hidClose(dev) }
+        while running {
+            // Open (or reopen after disconnect)
+            guard let dev = hidOpen(0x18F0, 0x4E40, nil) else {
+                // Device not available yet — wait and retry
+                Thread.sleep(forTimeInterval: 2.0)
+                continue
+            }
 
+            runSession(dev: dev, hidRead: hidRead, hidWrite: hidWrite, hidClose: hidClose)
+            // runSession returned — device was lost. Close and loop back to reopen.
+            hidClose(dev)
+
+            if running {
+                // Brief pause before reconnect attempt so we don't spin on rapid failures
+                Thread.sleep(forTimeInterval: 1.0)
+            }
+        }
+    }
+
+    /// Runs the read/write loop for a single open device handle.
+    /// Returns when the device becomes unresponsive (consecutive empty reads),
+    /// signalling the caller to close and reopen.
+    private func runSession(
+        dev: UnsafeMutableRawPointer,
+        hidRead: (UnsafeMutableRawPointer?, UnsafeMutablePointer<UInt8>, Int, Int32) -> Int32,
+        hidWrite: (UnsafeMutableRawPointer?, UnsafePointer<UInt8>, Int) -> Int32,
+        hidClose _: (UnsafeMutableRawPointer?) -> Void
+    ) {
         var buf = [UInt8](repeating: 0, count: 64)
         var lastMuteState: Bool?
-        // After we send a write, suppress heartbeat-driven state changes for this many
-        // milliseconds to give the device time to update byte[29] consistently.
         var suppressUntil: Date = .distantPast
+        var emptyReadStreak = 0
+        // After ~5 seconds of silence the device is considered lost
+        let maxEmptyReads = 50
 
         while running {
-            // Check for a pending mute command from the main thread
             lock.lock()
             let pending = pendingMute
             pendingMute = nil
@@ -81,22 +107,35 @@ final class HIDMonitor {
 
             if let muted = pending {
                 var report: [UInt8] = [0x06, muted ? 0x01 : 0x00]
-                _ = hidWrite(dev, &report, 2)
-                lastMuteState = muted
-                suppressUntil = Date(timeIntervalSinceNow: 0.4)
+                let written = hidWrite(dev, &report, 2)
+                if written > 0 {
+                    lastMuteState = muted
+                    suppressUntil = Date(timeIntervalSinceNow: 0.4)
+                    emptyReadStreak = 0
+                }
             }
 
-            // Read next report with a short timeout so we stay responsive
             let readCount = hidRead(dev, &buf, 64, 100)
-            guard readCount > 0 else { continue }
 
-            // Only care about vendor heartbeat: Report ID 3, type 0xEF
+            if readCount < 0 {
+                // Hard error — device disconnected
+                return
+            }
+
+            if readCount == 0 {
+                emptyReadStreak += 1
+                if emptyReadStreak >= maxEmptyReads {
+                    // Device stopped sending heartbeats — treat as disconnected
+                    return
+                }
+                continue
+            }
+
+            emptyReadStreak = 0
+
             guard buf[0] == 0x03, buf[1] == 0xEF else { continue }
-
-            // Skip if we just issued a write and the device hasn't settled yet
             guard Date() >= suppressUntil else { continue }
 
-            // byte[29] = 0x01 muted, 0x00 unmuted
             let deviceMuted = buf[29] != 0x00
 
             if deviceMuted != lastMuteState {
