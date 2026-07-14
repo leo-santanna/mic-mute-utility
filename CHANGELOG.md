@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.1] - 2026-07-14
+
+### Fixed
+- Wave mic mute and LED stop working after a macOS logout/login cycle without restarting the app. HIDMonitor now automatically detects a stale device handle and reconnects when the USB device is re-enumerated.
+
 ## [1.1.0] - 2026-07-10
 
 ### Added
