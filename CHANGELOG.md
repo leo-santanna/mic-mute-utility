@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.0] - 2026-07-14
+
+### Added
+- About window accessible from the menu bar, showing the app version, a short description, and buttons to open the GitHub repository and Buy Me a Coffee page.
+
+### Fixed
+- macOS no longer prompts for Accessibility permission on every app launch. The Meet PWA sync path now uses osascript (a system binary with its own TCC grants) instead of CGEvent, so the app binary requires no Accessibility permission at all.
+
 ## [1.1.1] - 2026-07-14
 
 ### Fixed
