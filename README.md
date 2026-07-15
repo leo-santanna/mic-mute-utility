@@ -19,7 +19,7 @@
 
 <p align="center">
   <a href="https://github.com/leo-santanna/mic-mute-utility/actions/workflows/ci.yml"><img src="https://github.com/leo-santanna/mic-mute-utility/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
-  <a href="https://github.com/leo-santanna/mic-mute-utility/releases"><img src="https://img.shields.io/badge/release-v1.2.0-4c8dff" alt="Latest release"></a>
+  <a href="https://github.com/leo-santanna/mic-mute-utility/releases"><img src="https://img.shields.io/github/v/release/leo-santanna/mic-mute-utility?label=release&color=4c8dff" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-blue" alt="macOS 14+">
   <img src="https://img.shields.io/badge/Swift-5.9-orange" alt="Swift 5.9">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license">

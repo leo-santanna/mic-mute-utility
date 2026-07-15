@@ -21,5 +21,3 @@ Unzip, drag to Applications, right-click > Open on first launch (it's not notari
 Happy to answer any questions!
 
 ---
-
-> **Note before posting:** make the GitHub repo public first so the link works for everyone.
