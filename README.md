@@ -19,7 +19,7 @@
 
 <p align="center">
   <a href="https://github.com/leo-santanna/mic-mute-utility/actions/workflows/ci.yml"><img src="https://github.com/leo-santanna/mic-mute-utility/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
-  <a href="https://github.com/leo-santanna/mic-mute-utility/releases"><img src="https://img.shields.io/github/v/release/leo-santanna/mic-mute-utility?label=release&color=4c8dff" alt="Latest release"></a>
+  <a href="https://github.com/leo-santanna/mic-mute-utility/releases"><img src="https://img.shields.io/badge/release-v1.2.0-4c8dff" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-blue" alt="macOS 14+">
   <img src="https://img.shields.io/badge/Swift-5.9-orange" alt="Swift 5.9">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license">
@@ -45,26 +45,23 @@ The official Insta360 Wave Controller app provides a popup to mute the mic, but 
 
 ## Installation
 
-### Option A: build from source (recommended)
+Download the latest `WaveMute.app.zip` from the [Releases](https://github.com/leo-santanna/mic-mute-utility/releases) page, unzip, and drag `WaveMute.app` to `/Applications`.
+
+On first launch, right-click the app and choose **Open** to bypass Gatekeeper (the app is ad-hoc signed, not notarized). After that, it opens normally.
+
+### Build from source
+
+If you prefer to build locally:
 
 ```bash
-# 1. Install hidapi (build-time only, bundled into the app afterwards)
 brew install hidapi
-
-# 2. Clone and build
 git clone https://github.com/leo-santanna/mic-mute-utility.git
 cd mic-mute-utility
 bash build.sh
-
-# 3. Install
 cp -r WaveMute.app /Applications/
-xattr -cr /Applications/WaveMute.app   # clear Gatekeeper quarantine
+xattr -cr /Applications/WaveMute.app
 open /Applications/WaveMute.app
 ```
-
-### Option B: download a release
-
-Download the latest `WaveMute.app.zip` from the [Releases](https://github.com/leo-santanna/mic-mute-utility/releases) page, unzip, and drag to `/Applications`. On first launch you may need to right-click > Open to bypass Gatekeeper (the app is ad-hoc signed, not notarized).
 
 ## Usage
 
