@@ -1,39 +1,47 @@
-# WaveMute
+<p align="center">
+  <img src="docs/assets/icon.png" width="140" alt="WaveMute icon">
+</p>
 
-A lightweight macOS menu bar utility that gives the **Insta360 Wave USB microphone** a proper global mute shortcut, with full LED feedback and two-way state sync.
+<h1 align="center">WaveMute</h1>
 
-[![CI](https://github.com/leo-santanna/mic-mute-utility/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/leo-santanna/mic-mute-utility/actions/workflows/ci.yml)
-![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
-![Swift](https://img.shields.io/badge/Swift-5.9-orange)
-![License](https://img.shields.io/badge/license-MIT-green)
+<p align="center">
+  A global mute shortcut for the Insta360 Wave USB microphone.<br>
+  Lightweight, open source, and everything runs on your Mac.
+</p>
 
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-leonardoebs-FFDD00?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/leonardoebs)
+<p align="center">
+  <a href="#installation">Install</a> ·
+  <a href="#usage">Usage</a> ·
+  <a href="#how-it-works">How it works</a> ·
+  <a href="CHANGELOG.md">Changelog</a> ·
+  <a href="CONTRIBUTING.md">Contributing</a>
+</p>
 
----
+<p align="center">
+  <a href="https://github.com/leo-santanna/mic-mute-utility/actions/workflows/ci.yml"><img src="https://github.com/leo-santanna/mic-mute-utility/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://github.com/leo-santanna/mic-mute-utility/releases"><img src="https://img.shields.io/github/v/release/leo-santanna/mic-mute-utility?label=release&color=4c8dff" alt="Latest release"></a>
+  <img src="https://img.shields.io/badge/macOS-14%2B-blue" alt="macOS 14+">
+  <img src="https://img.shields.io/badge/Swift-5.9-orange" alt="Swift 5.9">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license">
+  <a href="https://buymeacoffee.com/leonardoebs"><img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-leonardoebs-FFDD00?style=flat&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me a Coffee"></a>
+</p>
 
-## Why this exists
-
-The official Insta360 Wave Controller app provides a menu bar popup to mute the mic, but offers no global keyboard shortcut. This utility fills that gap with a minimal, always-on menu bar app you can assign any hotkey to, including dedicated mute keys found on many modern keyboards.
-
----
+The official Insta360 Wave Controller app provides a popup to mute the mic, but no global keyboard shortcut. WaveMute fills that gap with a minimal menu bar app you can assign any hotkey to, with full LED sync and bidirectional Google Meet integration.
 
 ## Features
 
-- **Global hotkey**: configurable, defaults to F9
-- **Hardware-level mute**: mutes the mic at the device firmware level via HID Output Report 6, not through CoreAudio, so meeting apps (Google Meet, Teams, Zoom) don't show a "microphone muted by system" warning
-- **LED sync**: the mic's front LED turns red when muted, exactly like the official app
-- **Physical button sync**: muting/unmuting from the mic's built-in touch display is reflected immediately in the menu bar icon
-- **Launch at login**: optional, toggled from the menu
-- **No runtime dependencies**: `libhidapi` is bundled inside the app
-
----
+- **Global hotkey** — configurable, defaults to F9. Works on any keyboard.
+- **Hardware-level mute** — mutes the mic at device firmware level via HID Output Report 6, not through CoreAudio, so meeting apps never show a "microphone muted by system" warning.
+- **LED sync** — the mic's front LED turns red when muted, exactly like the official app.
+- **Physical button sync** — muting via the mic's built-in touch display updates the menu bar icon in real time.
+- **Google Meet integration** — muting propagates to any active Meet call (Chrome tab or PWA), and clicking mute inside Meet syncs back within 500ms.
+- **Launch at login** — optional, toggled from the menu.
+- **No runtime dependencies** — `libhidapi` is bundled inside the app.
 
 ## Requirements
 
 - macOS 14 (Sonoma) or later
 - Insta360 Wave USB microphone
-
----
 
 ## Installation
 
@@ -58,8 +66,6 @@ open /Applications/WaveMute.app
 
 Download the latest `WaveMute.app.zip` from the [Releases](https://github.com/leo-santanna/mic-mute-utility/releases) page, unzip, and drag to `/Applications`. On first launch you may need to right-click > Open to bypass Gatekeeper (the app is ad-hoc signed, not notarized).
 
----
-
 ## Usage
 
 Once running, a microphone icon appears in the menu bar:
@@ -75,7 +81,7 @@ Once running, a microphone icon appears in the menu bar:
 
 **Launch at login:** click the menu bar icon and toggle *Launch at Login*.
 
----
+**About:** click the menu bar icon and select *About WaveMute* to open the About window with links to GitHub and Buy Me a Coffee.
 
 ## How it works
 
@@ -89,6 +95,14 @@ Through reverse engineering the HID descriptor and firmware behaviour, we found 
 - The device reflects its mute state in **byte[29]** of the periodic vendor heartbeat it broadcasts (Report ID 3, type `0xEF`). WaveMute reads this to stay in sync with physical button presses.
 - Report 6 causes the device to briefly mirror its state through the USB Audio Class mute control (which macOS CoreAudio exposes), so meeting apps could detect a "system mute" event. WaveMute subscribes to that CoreAudio property and immediately resets it to `0`, so the OS never reports the mic as system-muted.
 
+### Google Meet sync
+
+Meet sync works via `osascript` subprocesses — no Accessibility permission is required from the app binary.
+
+- **Chrome tab:** JS injection clicks the mic button by `aria-label`.
+- **Meet PWA:** `System Events` keystroke `Cmd+D` delivered to `app_mode_loader`.
+- **Inbound:** polls the mic button `aria-label` every 500ms; when Meet's state changes externally, it syncs back to the Wave mic.
+
 ### Device identifiers
 
 | Property | Value |
@@ -99,8 +113,6 @@ Through reverse engineering the HID descriptor and firmware behaviour, we found 
 | Mute LED report | Output Report ID `0x06`, bit 0 |
 | Mute state in heartbeat | Report ID `0x03`, type `0xEF`, byte offset 29 |
 
----
-
 ## Project structure
 
 ```
@@ -109,18 +121,19 @@ mic-mute-utility/
 │   ├── main.swift              # App entry point
 │   ├── AppDelegate.swift       # Menu bar, hotkey, orchestration
 │   ├── HIDMonitor.swift        # Persistent HID read/write loop
+│   ├── MeetSync.swift          # Google Meet bidirectional sync
 │   ├── ShortcutRecorder.swift  # Hotkey capture window
+│   ├── AboutWindow.swift       # About window
 │   ├── MenuBarIcons.swift      # SF Symbol icon helpers
 │   ├── LaunchAtLogin.swift     # LaunchAgent plist install/uninstall
 │   ├── Info.plist              # Bundle metadata
 │   └── AppIcon.icns            # App icon
+├── docs/assets/                # Images used in the README
 ├── icon.iconset/               # Source PNGs for the icon (all required sizes)
 ├── make_icon.swift             # Script to regenerate AppIcon.icns
 ├── build.sh                    # One-step build + bundle + sign script
 └── README.md
 ```
-
----
 
 ## Building
 
@@ -129,14 +142,6 @@ bash build.sh
 ```
 
 This compiles all Swift sources, bundles `libhidapi.dylib` from Homebrew into `WaveMute.app/Contents/Frameworks/`, sets the correct rpath, ad-hoc signs each component in dependency order, and clears the quarantine attribute.
-
-To regenerate the app icon (e.g. after design changes):
-
-```bash
-swift make_icon.swift <size> <output.png>
-```
-
----
 
 ## Reverse engineering notes
 
@@ -148,8 +153,6 @@ The investigation that led to this utility involved:
 4. Empirically testing each HID output report to identify which one controls the LED and audio gate
 5. Capturing the periodic heartbeat to find the byte that reflects device mute state
 6. Discovering the CoreAudio bounce-back and implementing the property listener guard
-
----
 
 ## Contributing
 
@@ -164,13 +167,9 @@ Some areas that could be improved:
 
 Please open an issue before starting significant work so we can coordinate.
 
----
-
 ## License
 
 MIT - see [LICENSE](LICENSE).
-
----
 
 ## Acknowledgements
 
