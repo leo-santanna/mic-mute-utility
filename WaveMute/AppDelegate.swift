@@ -13,6 +13,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var shortcutModifiers: UInt32 = 0
     private var shortcutDisplay: String = "F9"
     private let hidMonitor = HIDMonitor()
+    private var aboutWindowController: AboutWindowController?
 
     func applicationDidFinishLaunching(_: Notification) {
         loadShortcut()
@@ -31,6 +32,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         launchItem.state = LaunchAtLogin.isEnabled ? .on : .off
         menu.addItem(launchItem)
         menu.addItem(NSMenuItem.separator())
+        menu.addItem(NSMenuItem(title: "About WaveMute", action: #selector(showAbout), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
 
@@ -44,7 +46,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             hidMonitor.sendMute(muted)
             updateMenuBarIcon()
         }
-        MeetSync.shared.prepareIfNeeded()
+        MeetSync.shared.prepareIfNeeded() // starts polling only, no permission prompt
 
         // Always start unmuted on launch
         hidMonitor.sendMute(false)
@@ -207,6 +209,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard val != 0 else { return } // already unmuted, nothing to do
         var zero: UInt32 = 0
         AudioObjectSetPropertyData(deviceID, &muteProp, 0, nil, size, &zero)
+    }
+
+    // MARK: - About
+
+    @objc func showAbout() {
+        if aboutWindowController == nil {
+            aboutWindowController = AboutWindowController()
+        }
+        aboutWindowController?.showWindow(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     // MARK: - Change shortcut

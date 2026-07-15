@@ -1,52 +1,44 @@
 import AppKit
-import Carbon
 import Foundation
 
 // Syncs the mute state to an active Google Meet call.
 //
 // Outbound (WaveMute -> Meet):
-//   Chrome tab: JS injection via osascript subprocess — no permissions needed.
-//   Meet PWA:   CGEvent Cmd+D sent to app_mode_loader — needs Accessibility.
+//   Both Chrome tabs and the Meet PWA are targeted via osascript subprocesses.
+//   Chrome tab: JS injection clicks the mic button by aria-label.
+//   Meet PWA:   osascript activates the PWA and sends Cmd+D via System Events.
+//   Using osascript for both paths means NO Accessibility permission is required
+//   from the app binary — osascript is a system binary with its own TCC grants.
 //
 // Inbound (Meet -> WaveMute):
 //   Polls the mic button aria-label in any meet.google.com Chrome tab every 500ms.
-//   This covers both Chrome tabs and the Meet PWA, which appears as a Chrome tab.
-//   When the state flips and WaveMute did not cause it, onExternalStateChange fires.
+//   This covers both Chrome tabs and the PWA (which appears as a Chrome tab).
 //   A suppression window prevents reacting to our own outbound syncs.
 
 final class MeetSync {
     static let shared = MeetSync()
 
-    /// Fired on the main thread when Meet's mic state changes externally.
     var onExternalStateChange: ((_ muted: Bool) -> Void)?
 
     private let meetPWABundleID = "com.google.Chrome.app.kjgfgldnnfoeklkmfkjfagphfepbbdan"
-    private var hasPromptedForAccessibility = false
 
     private var pollTimer: Timer?
-    private var lastKnownMeetState: Bool? // nil = not in a call
-    private var suppressUntil: Date = .distantPast // ignore poll hits after our own sync
+    private var lastKnownMeetState: Bool?
+    private var suppressUntil: Date = .distantPast
 
     private init() {}
 
-    // MARK: - Launch setup
-
     func prepareIfNeeded() {
-        if isPWARunning(), !AXIsProcessTrusted() {
-            hasPromptedForAccessibility = true
-            requestAccessibility()
-        }
         startPolling()
     }
 
     // MARK: - Outbound sync (WaveMute -> Meet)
 
     func sync(muted: Bool) {
-        // Suppress the inbound poller briefly so we don't react to our own change.
         suppressUntil = Date(timeIntervalSinceNow: 1.5)
         DispatchQueue.global(qos: .userInitiated).async {
             self.syncChromeTab(muted: muted)
-            self.syncPWA()
+            self.syncPWA(muted: muted)
         }
     }
 
@@ -72,7 +64,6 @@ final class MeetSync {
                 guard state != self.lastKnownMeetState else { return }
                 let previous = self.lastKnownMeetState
                 self.lastKnownMeetState = state
-                // Only fire callback for changes, not the initial read.
                 if previous != nil {
                     self.onExternalStateChange?(state)
                 }
@@ -80,7 +71,6 @@ final class MeetSync {
         }
     }
 
-    /// Returns true=muted, false=unmuted, nil=no Meet tab found.
     private func readMeetMuteState() -> Bool? {
         let script = """
         tell application "Google Chrome"
@@ -99,16 +89,7 @@ final class MeetSync {
             return "none"
         end tell
         """
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        task.arguments = ["-e", script]
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError = FileHandle.nullDevice
-        guard (try? task.run()) != nil else { return nil }
-        task.waitUntilExit()
-        let output = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?
-            .trimmingCharacters(in: .whitespacesAndNewlines) ?? "none"
+        let output = runOsascript(script)
         switch output {
         case "muted": return true
         case "unmuted": return false
@@ -120,73 +101,83 @@ final class MeetSync {
 
     private func syncChromeTab(muted: Bool) {
         let targetLabel = muted ? "Turn off microphone" : "Turn on microphone"
-        let js = "(function(){" +
-            "var btn=document.querySelector('button[aria-label*=\"\(targetLabel)\"]');" +
-            "if(btn){btn.click();return 'clicked';}return 'not_found';})()"
-        let escapedJS = js
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
         let script = """
         tell application "Google Chrome"
             repeat with w in windows
                 repeat with i from 1 to count of tabs in w
                     set t to tab i of w
                     if URL of t contains "meet.google.com" then
-                        execute t javascript "\(escapedJS)"
+                        set js to "(function(){"
+                        set js to js & "var btn=document.querySelector('button[aria-label*=\\"\(targetLabel)\\"]');"
+                        set js to js & "if(btn){btn.click();return 'clicked';}return 'not_found';})()"
+                        execute t javascript js
                     end if
                 end repeat
             end repeat
         end tell
         """
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        task.arguments = ["-e", script]
-        task.standardOutput = FileHandle.nullDevice
-        task.standardError = FileHandle.nullDevice
-        try? task.run()
+        runOsascript(script, wait: false)
     }
 
-    // MARK: - Meet PWA (CGEvent Cmd+D)
+    // MARK: - Meet PWA (osascript keystroke — no Accessibility permission needed)
 
-    private func syncPWA() {
+    private func syncPWA(muted _: Bool) {
         guard isPWARunning() else { return }
-        guard AXIsProcessTrusted() else {
-            if !hasPromptedForAccessibility {
-                hasPromptedForAccessibility = true
-                requestAccessibility()
-            }
-            return
-        }
-        let previousApp = NSWorkspace.shared.frontmostApplication
-        if let meetApp = NSRunningApplication.runningApplications(
-            withBundleIdentifier: meetPWABundleID
-        ).first {
-            meetApp.activate()
-            Thread.sleep(forTimeInterval: 0.15)
-            postCmdD()
-            Thread.sleep(forTimeInterval: 0.05)
-            previousApp?.activate()
-        }
+        // Check if the Chrome tab path already covers the PWA.
+        // The PWA appears as a Chrome tab, so if a meet.google.com tab was found
+        // by syncChromeTab, the PWA is already handled. Send Cmd+D only when there
+        // is no Chrome meet tab (i.e. the PWA is the sole Meet surface).
+        guard !hasChromeMeetTab() else { return }
+        let script = """
+        tell application "Google Meet"
+            activate
+        end tell
+        delay 0.15
+        tell application "System Events"
+            tell process "app_mode_loader"
+                keystroke "d" using command down
+            end tell
+        end tell
+        """
+        runOsascript(script, wait: false)
     }
 
     private func isPWARunning() -> Bool {
         !NSRunningApplication.runningApplications(withBundleIdentifier: meetPWABundleID).isEmpty
     }
 
-    private func postCmdD() {
-        let src = CGEventSource(stateID: .hidSystemState)
-        let keyDown = CGEvent(keyboardEventSource: src, virtualKey: CGKeyCode(0x02), keyDown: true)
-        let keyUp = CGEvent(keyboardEventSource: src, virtualKey: CGKeyCode(0x02), keyDown: false)
-        keyDown?.flags = .maskCommand
-        keyUp?.flags = .maskCommand
-        keyDown?.post(tap: .cghidEventTap)
-        keyUp?.post(tap: .cghidEventTap)
+    private func hasChromeMeetTab() -> Bool {
+        let script = """
+        tell application "Google Chrome"
+            repeat with w in windows
+                repeat with i from 1 to count of tabs in w
+                    if URL of tab i of w contains "meet.google.com" then
+                        return "yes"
+                    end if
+                end repeat
+            end repeat
+            return "no"
+        end tell
+        """
+        return runOsascript(script) == "yes"
     }
 
-    private func requestAccessibility() {
-        DispatchQueue.main.async {
-            let opts = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
-            AXIsProcessTrustedWithOptions(opts as CFDictionary)
+    // MARK: - Helpers
+
+    @discardableResult
+    private func runOsascript(_ script: String, wait: Bool = true) -> String {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        task.arguments = ["-e", script]
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = FileHandle.nullDevice
+        guard (try? task.run()) != nil else { return "" }
+        if wait {
+            task.waitUntilExit()
+            return String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         }
+        return ""
     }
 }
