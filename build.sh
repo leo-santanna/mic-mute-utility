@@ -51,6 +51,7 @@ swiftc \
   WaveMute/LaunchAtLogin.swift \
   WaveMute/HIDMonitor.swift \
   WaveMute/MeetSync.swift \
+  WaveMute/AboutWindow.swift \
   $BETA_FLAG \
   -o "$BINARY" \
   -framework Cocoa \
@@ -72,7 +73,7 @@ cp WaveMute/AppIcon.icns "$RESOURCES/AppIcon.icns"
 
 echo "==> Signing (ad-hoc)"
 codesign --force --sign - "$APP/Contents/Frameworks/libhidapi.dylib"
-codesign --force --sign - --entitlements WaveMute/WaveMute.entitlements "$APP/Contents/MacOS/WaveMute"
+codesign --force --sign - "$APP/Contents/MacOS/WaveMute"
 codesign --force --sign - "$APP"
 
 echo "==> Clearing quarantine"
