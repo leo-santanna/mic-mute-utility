@@ -1,5 +1,16 @@
 # Changelog
 
+All notable changes to WaveMute are documented here.
+
+For the reasoning behind significant technical decisions, see the [Architecture Decision Records](docs/adr/).
+For the full release process, see [docs/release-and-distribution.md](docs/release-and-distribution.md).
+
+---
+
+## [Unreleased]
+
+---
+
 ## [1.2.0] - 2026-07-14
 
 ### Added

@@ -2,6 +2,12 @@
 
 Thanks for your interest in WaveMute. This document covers the development workflow, commit conventions, local tooling setup, and the full release process.
 
+Before implementing anything non-trivial, read the relevant documentation:
+
+- **[docs/architecture.md](docs/architecture.md)** — component map, data flows, key constraints. Start here for any new feature.
+- **[docs/adr/](docs/adr/)** — Architecture Decision Records explaining why key decisions were made.
+- **[docs/release-and-distribution.md](docs/release-and-distribution.md)** — build system, release checklist, CI/CD pipeline, distribution roadmap.
+
 ---
 
 ## Table of contents
@@ -9,6 +15,7 @@ Thanks for your interest in WaveMute. This document covers the development workf
 - [Getting started](#getting-started)
 - [Development workflow](#development-workflow)
 - [Local checks](#local-checks)
+- [Architecture decisions](#architecture-decisions)
 - [Release process](#release-process)
 
 ---
@@ -95,7 +102,29 @@ bash build.sh
 
 ---
 
+## Architecture decisions
+
+Significant technical decisions are recorded as Architecture Decision Records (ADRs) in [`docs/adr/`](docs/adr/). Each ADR captures the context, the decision made, and its consequences.
+
+**When to write an ADR:** any time you introduce or change a non-obvious technical approach — a new IPC mechanism, a permission model choice, a workaround for a platform quirk, or a decision that would otherwise need to be re-explained in future sessions.
+
+**Existing ADRs:**
+
+| # | Title | Status |
+|---|-------|--------|
+| [001](docs/adr/001-hid-report-6-for-mute.md) | Use HID Output Report 6 for mute control | Accepted |
+| [002](docs/adr/002-coreaudio-bounce-back-guard.md) | Subscribe to CoreAudio mute property and immediately reset it | Accepted |
+| [003](docs/adr/003-hid-reconnect-loop.md) | Reconnect HID device automatically on USB re-enumeration | Accepted |
+| [004](docs/adr/004-meet-sync-osascript.md) | Use osascript subprocesses for Google Meet sync | Accepted |
+| [005](docs/adr/005-beta-build-flag.md) | Detect beta builds via git tag and compile-time flag | Accepted |
+
+Use [`docs/adr/000-template.md`](docs/adr/000-template.md) as the starting point for a new ADR. Number sequentially.
+
+---
+
 ## Release process
+
+The full release process, build system details, CI/CD pipeline, and distribution roadmap are documented in **[docs/release-and-distribution.md](docs/release-and-distribution.md)**. The summary below covers the key steps.
 
 Releases are created by maintainers only. The process is driven by git tags: pushing a tag of the form `vX.Y.Z` to the repo triggers the `release.yml` GitHub Actions workflow, which builds the app, packages it, and publishes a GitHub Release automatically.
 
